@@ -43,3 +43,21 @@ def find_popular_articles(df, max_rows=100):
     return country_counts
 
 
+
+
+def website_sentiment_distribution(data):
+    # Generate sentiment counts for each domain
+    sentiment_counts = data.groupby(['source_name', 'title_sentiment']).size().unstack(fill_value=0)
+    
+    # Ensure that sentiment types are present, and handle dynamic cases if needed
+    sentiment_types = ['Positive', 'Neutral', 'Negative']
+    for sentiment in sentiment_types:
+        if sentiment not in sentiment_counts.columns:
+            sentiment_counts[sentiment] = 0
+    
+    # Calculate total, mean, and median sentiment counts for each domain
+    sentiment_counts['Total'] = sentiment_counts.sum(axis=1)
+    sentiment_counts['Mean'] = sentiment_counts[sentiment_types].mean(axis=1)
+    sentiment_counts['Median'] = sentiment_counts[sentiment_types].median(axis=1)
+
+    return sentiment_counts
