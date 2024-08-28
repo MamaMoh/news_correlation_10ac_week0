@@ -6,7 +6,13 @@ from collections import Counter
 from keybert import KeyBERT
 from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
+import matplotlib.pyplot as plt
+from nltk.corpus import stopwords
+import mlflow
+import mlflow.sklearn
+from bertopic import BERTopic
 
+nltk.download('stopwords')
 nltk.download('punkt')
 nltk.download('averaged_perceptron_tagger')
 nltk.download('maxent_ne_chunker')
@@ -60,8 +66,6 @@ def website_sentiment_distribution(data):
     sentiment_counts['Mean'] = sentiment_counts[sentiment_types].mean(axis=1)
     sentiment_counts['Median'] = sentiment_counts[sentiment_types].median(axis=1)
 
-    print(sentiment_counts['Total'])
-
     return sentiment_counts
 
 def keybert_keyword_extraction(news_data):
@@ -106,3 +110,43 @@ def calculate_similarity(title_keywords_list, content_keywords_list):
         similarity_list.append(similarity)
 
     return similarity_list
+
+
+def remove_stopwords(text):
+    stop_words = set(stopwords.words('english'))
+    words = text.split()
+    filtered_words = [word for word in words if word.lower() not in stop_words]
+    return ' '.join(filtered_words)
+
+def perform_topic_modeling_with_mlflow(dataframe):
+    # Start MLflow run
+    with mlflow.start_run():
+        # Sample data and combine title and content
+        sampled_data = dataframe.sample(1000)
+        sampled_data['text'] = sampled_data['title'] + ' ' + sampled_data['content']
+        sampled_list = sampled_data['text'].tolist()
+        
+        # Remove stopwords from the text
+        sampled_list = [remove_stopwords(text) for text in sampled_list]
+        
+        # Fit the BERTopic model
+        topic_model = BERTopic()
+        topics, probs = topic_model.fit_transform(sampled_list)
+        print('Model fitting Done!')
+        
+        # Log model and parameters to MLflow
+        mlflow.log_param("model_type", "BERTopic")
+        mlflow.log_param("n_topics", len(set(topics)))
+        mlflow.log_param("n_samples", len(sampled_list))
+        
+        # Log the model
+        mlflow.sklearn.log_model(topic_model, "bertopic_model")
+        
+        # Log the topics as an artifact (CSV)
+        topic_info = topic_model.get_topic_info()
+        topic_info.to_csv("topic_info.csv", index=False)
+        mlflow.log_artifact("topic_info.csv")
+        
+        print("Logged to MLflow successfully!")
+        
+        return topic_info, topic_model
