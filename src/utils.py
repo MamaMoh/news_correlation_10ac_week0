@@ -11,6 +11,7 @@ from nltk.corpus import stopwords
 import mlflow
 import mlflow.sklearn
 from bertopic import BERTopic
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 nltk.download('stopwords')
 nltk.download('punkt')
@@ -150,3 +151,35 @@ def perform_topic_modeling_with_mlflow(dataframe):
         print("Logged to MLflow successfully!")
         
         return topic_info, topic_model
+    
+
+
+# Function to extract named entities
+def get_named_entities(text):
+    chunked = ne_chunk(pos_tag(word_tokenize(text)))
+    entities = []
+    for chunk in chunked:
+        if isinstance(chunk, Tree):
+            entity = " ".join([token for token, pos in chunk.leaves()])
+            entities.append(entity)
+    return entities
+
+# Function to extract keywords and entities from articles
+def extract_features(dataframe):
+    kw_model = KeyBERT()
+    
+    # Lists to store extracted features
+    named_entities_list = []
+    keywords_list = []
+    
+    for article in dataframe['content']:
+        named_entities = get_named_entities(article)
+        keywords = kw_model.extract_keywords(article, keyphrase_ngram_range=(1, 2), stop_words='english')
+        
+        named_entities_list.append(named_entities)
+        keywords_list.append([kw for kw, _ in keywords])
+    
+    # Combine entities and keywords into a single feature set
+    all_entities_and_keywords = [' '.join(entities + keywords) for entities, keywords in zip(named_entities_list, keywords_list)]
+    
+    return all_entities_and_keywords
