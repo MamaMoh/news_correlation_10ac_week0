@@ -368,7 +368,7 @@ def read_articles():
             cursor.close()
             conn.close()
 
-#function to read from the traffic table
+# Function to read data from the 'traffic_data' table and return it as a DataFrame
 def read_traffic_data():
     try:
         conn = psycopg2.connect(
@@ -383,11 +383,13 @@ def read_traffic_data():
         cursor.execute("SELECT * FROM traffic_data;")
         traffic_data = cursor.fetchall()
 
-        # Print or return the result as needed
-        for traffic in traffic_data:
-            print(traffic)
+        # Get column names
+        colnames = [desc[0] for desc in cursor.description]
 
-        return traffic_data
+        # Convert the result into a DataFrame
+        df = pd.DataFrame(traffic_data, columns=colnames)
+
+        return df
 
     except (Exception, psycopg2.DatabaseError) as error:
         print(f"Error: {error}")
@@ -395,9 +397,7 @@ def read_traffic_data():
         if conn is not None:
             cursor.close()
             conn.close()
-
-
-#function to read from the location table
+# Function to read data from the 'domain_locations' table and return it as a DataFrame
 def read_domain_locations():
     try:
         conn = psycopg2.connect(
@@ -412,11 +412,13 @@ def read_domain_locations():
         cursor.execute("SELECT * FROM domain_locations;")
         locations = cursor.fetchall()
 
-        # Print or return the result as needed
-        for location in locations:
-            print(location)
+        # Get column names
+        colnames = [desc[0] for desc in cursor.description]
 
-        return locations
+        # Convert the result into a DataFrame
+        df = pd.DataFrame(locations, columns=colnames)
+
+        return df
 
     except (Exception, psycopg2.DatabaseError) as error:
         print(f"Error: {error}")
@@ -424,8 +426,8 @@ def read_domain_locations():
         if conn is not None:
             cursor.close()
             conn.close()
-
-#function to read from the location table
+            
+# Function to read data from the 'domains' table and return it as a DataFrame
 def read_domains():
     try:
         conn = psycopg2.connect(
@@ -440,11 +442,13 @@ def read_domains():
         cursor.execute("SELECT * FROM domains;")
         domains = cursor.fetchall()
 
-        # Print or return the result as needed
-        for domain in domains:
-            print(domain)
+        # Get column names
+        colnames = [desc[0] for desc in cursor.description]
 
-        return domains
+        # Convert the result into a DataFrame
+        df = pd.DataFrame(domains, columns=colnames)
+
+        return df
 
     except (Exception, psycopg2.DatabaseError) as error:
         print(f"Error: {error}")
@@ -452,10 +456,6 @@ def read_domains():
         if conn is not None:
             cursor.close()
             conn.close()
-
-
-
-
 # Run the function to create the database
 if __name__ == "__main__":
     create_database()
